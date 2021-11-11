@@ -1,7 +1,7 @@
 # EQD2/BED converter
 This script can be used to convert nominal dose distributions to EQD2 or BED dose distributions. It should used only for experimentation purposes.
 
-![image](image_asc.png)
+![image](image_asc2.png)
 
 ## Setup
 
@@ -24,15 +24,16 @@ Because it is not possible to modify the dose matrix inside ESAPI, a trick is ne
 6. Create a new plan in Eclipse. Do not add fields to the plan, but make sure that the StructureSet assigned is the same as in the original plan.
 7. Import the dicom dose file and attach it to the created empty plan. That is all. At the end you will have a plan without any fields, but with a valid dose distribution.
 
-![image](image_asc2.png)
 
 ## Details
 
 1. The calculation is performed with the well known formulas: EQD2 = D ( a/b + D/n) / (a/b + 2) and BED = D (1 + D / ( n a/b)). The third option, Multiply by a/b, is for testing purposes, ie. it simply multiples each voxel value with a/b.
 2. The accuracy of conversion equals the width of the dose matrix box. Do some testing to see how it works. The scanning for voxels inside structures is done only in the X direction.
-3. When you define a/b for each structure, you have to decide how the script will deal with overlapping regions. Using "Ascending": structures will be ordered in ascending order of a/b. Meaning that the structure with lower a/b will have all voxels overridden with new values, but the overlapping part of structures with higher a/b will not have values overridden for those voxels that are inside structures with lower a/b. For "Descending" the opposite applies.
+3. When you define a/b for each structure, you have to decide how the script will deal with overlapping regions. Using "Ascending": structures will be ordered in ascending order of a/b. Meaning that the structure with lower a/b will have all voxels overridden with new values, but the overlapping part of structures with higher a/b will not have values overridden for those voxels that are inside structures with lower a/b. For "Descending" the opposite applies. See image below.
 4. If you need better accuracy, calculate the original plan with smaller dose box width.
-5. 
+
+
+![image](image_asc.png)
 
 ## Important note
 
