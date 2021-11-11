@@ -5,7 +5,7 @@ This script can be used to convert nominal dose distributions to EQD2 or BED dos
 
 ## Setup
 
-To use the script, you should compile it on your system. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file in Dosimetry folder. 
+To use the script, you must compile it on your system. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file in Dosimetry folder. 
 The script was developed for Eclipse version 15.6. It may not work with other versions of Eclipse or Varian ESAPI.
 
 1. You will need to restore NuGet package for compilation: Evil-Dicom version 2.0.4. Right click the solution -> Restore NuGet packages.
