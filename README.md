@@ -1,5 +1,5 @@
 # EQD2/BED converter
-This script can be used to convert nominal dose distributions to EQD2 or BED dose distributions. It should used only for experimentation purposes.
+This script converts nominal dose distributions to EQD2 or BED dose distributions. It should be used only for experimentation purposes.
 
 ![image](image_asc2.png)
 
