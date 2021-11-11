@@ -5,10 +5,10 @@ This script can be used to convert nominal dose distributions to EQD2 or BED dos
 
 ## Setup
 
-To use the script, you should compile it on your system or use dll files in the folder *Compiled*. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file in Dosimetry folder. 
+To use the script, you should compile it on your system. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file in Dosimetry folder. 
 The script was developed for Eclipse version 15.6. It may not work with other versions of Eclipse or Varian ESAPI.
 
-1. You will need to restore NuGet package for compilation: Evil-Dicom. Right click the solution -> Restore NuGet packages.
+1. You will need to restore NuGet package for compilation: Evil-Dicom version 2.0.4. Right click the solution -> Restore NuGet packages.
 2. Don't forget the references to Varian dlls.
 3. Compile as Release for x64.
 
@@ -24,6 +24,8 @@ Because it is not possible to modify the dose matrix inside ESAPI, a trick is ne
 6. Create a new plan in Eclipse. Do not add fields to the plan, but make sure that the StructureSet assigned is the same as in the original plan.
 7. Import the dicom dose file and attach it to the created empty plan. That is all. At the end you will have a plan without any fields, but with a valid dose distribution.
 
+![image](image_asc2.png)
+
 ## Details
 
 1. The calculation is performed with the well known formulas: EQD2 = D ( a/b + D/n) / (a/b + 2) and BED = D (1 + D / ( n a/b)). The third option, Multiply by a/b, is for testing purposes, ie. it simply multiples each voxel value with a/b.
@@ -34,7 +36,7 @@ Because it is not possible to modify the dose matrix inside ESAPI, a trick is ne
 
 ## Important note
 
-**Before using this program see the [licence](https://github.com/brjdenis/VarianESAPI-HalcyonGantryAngle/blob/master/LICENSE) and make sure you understand it. The program comes with absolutely no guarantees of any kind.**
+**Before using this program see the [licence](https://github.com/brjdenis/VarianESAPI-EQD2Converter/blob/master/LICENSE) and make sure you understand it. The program comes with absolutely no guarantees of any kind.**
 
 ```
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
