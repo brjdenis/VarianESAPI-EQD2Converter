@@ -236,7 +236,7 @@ namespace EQD2Converter
 
             foreach (var row in this.DataGridStructuresList)
             {
-                if (row.AlphaBeta != null & row.AlphaBeta != "" & ConvertTextToDouble(row.AlphaBeta) != Double.NaN)
+                if (row.AlphaBeta != null && row.AlphaBeta != "" && ConvertTextToDouble(row.AlphaBeta) != Double.NaN)
                 {
                     Structure structure = this.scriptcontext.StructureSet.Structures.First(id => id.Id == row.Structure);
                     double alphabeta = ConvertTextToDouble(row.AlphaBeta);
