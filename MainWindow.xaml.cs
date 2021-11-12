@@ -35,9 +35,16 @@ namespace EQD2Converter
 
         public int numberOfFractions;
 
+        public double scaling;
+
         public HashSet<Tuple<int, int, int>> existingIndexes = new HashSet<Tuple<int, int, int>>() { };
 
         public delegate int calculateFunction(int dose, double alphabeta, double scaling);
+
+        public int[,,] originalArray;
+
+        public double doseMax;
+        public double doseMin;
 
         public MainWindow(ScriptContext scriptcontext)
         {
@@ -124,7 +131,7 @@ namespace EQD2Converter
 
                 if (result == true)
                 {
-                    ConvertDose(dlg.FileName);
+                    ConvertDose(false, dlg.FileName);
                     MessageBox.Show("Done!", "Message");
                 }
                 else
@@ -188,32 +195,11 @@ namespace EQD2Converter
             }
         }
 
-        public void ConvertDose(string filePath)
+        public int[,,] GetDoseVoxelsFromDose(Dose dose)
         {
-            var dcm = DICOMObject.Read(filePath);
-
-            double scaling = 1.0;
-            var _scaling = dcm.FindFirst(TagHelper.DoseGridScaling) as AbstractElement<double>;
-            if (_scaling != null)
-            {
-                scaling = _scaling.Data;
-            }
-
-            Dose dose = this.scriptcontext.ExternalPlanSetup.Dose;
-
             int Xsize = dose.XSize;
             int Ysize = dose.YSize;
             int Zsize = dose.ZSize;
-
-            double Xres = dose.XRes;
-            double Yres = dose.YRes;
-            double Zres = dose.ZRes;
-
-            VVector Xdir = dose.XDirection;
-            VVector Ydir = dose.YDirection;
-            VVector Zdir = dose.ZDirection;
-
-            VVector doseOrigin = dose.Origin;
 
             int[,,] doseMatrix = new int[Zsize, Xsize, Ysize];
 
@@ -231,6 +217,76 @@ namespace EQD2Converter
                     }
                 }
             }
+            return doseMatrix;
+        }
+
+        public int[,,] ConvertDose(bool preview = false, string filePath = "")
+        {
+            Dose dose = this.scriptcontext.ExternalPlanSetup.Dose;
+
+            int Xsize = dose.XSize;
+            int Ysize = dose.YSize;
+            int Zsize = dose.ZSize;
+
+            double Xres = dose.XRes;
+            double Yres = dose.YRes;
+            double Zres = dose.ZRes;
+
+            VVector Xdir = dose.XDirection;
+            VVector Ydir = dose.YDirection;
+            VVector Zdir = dose.ZDirection;
+
+            VVector doseOrigin = dose.Origin;
+
+            int[,,] doseMatrix = GetDoseVoxelsFromDose(dose);
+
+            this.originalArray = GetDoseVoxelsFromDose(dose);
+
+            // If only preview is sought calculate scaling factor from max dose
+            double scaling = 1.0;
+
+            if (preview)
+            {
+                DoseValue maxDose = dose.DoseMax3D;
+                double maxDoseVal = maxDose.Dose;
+
+                if (maxDose.IsRelativeDoseValue)
+                {
+                    if (this.scriptcontext.ExternalPlanSetup.TotalDose.Unit == DoseValue.DoseUnit.cGy)
+                    {
+                        maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 10000.0;
+                    }
+                    else
+                    {
+                        maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 100.0;
+                    }
+                }
+
+                if (maxDose.Unit == DoseValue.DoseUnit.cGy)
+                {
+                    maxDoseVal = maxDoseVal / 100.0;
+                }
+
+                Tuple<int, int> minMaxDose = GetMinMaxValues(doseMatrix, Xsize, Ysize, Zsize);
+
+                scaling = maxDoseVal / minMaxDose.Item2;
+
+                this.doseMin = minMaxDose.Item1 * scaling;
+                this.doseMax = minMaxDose.Item2 * scaling;
+            }
+
+            else
+            {
+                var dcm = DICOMObject.Read(filePath);
+
+                var _scaling = dcm.FindFirst(TagHelper.DoseGridScaling) as AbstractElement<double>;
+                if (_scaling != null)
+                {
+                    scaling = _scaling.Data;
+                }
+            }
+
+            this.scaling = scaling;
 
             Dictionary<Structure, double> structureDict = new Dictionary<Structure, double>() { };
 
@@ -278,7 +334,24 @@ namespace EQD2Converter
                 }
             }
 
+            if (!preview)
+            {
+                WriteBackToDicom(filePath, doseMatrix, Xsize, Ysize, Zsize);
+                this.existingIndexes = new HashSet<Tuple<int, int, int>>() { }; // reset!
+                return new int[0, 0, 0];
+            }
+            else
+            {
+                this.existingIndexes = new HashSet<Tuple<int, int, int>>() { }; // reset!
+                return doseMatrix;
+            }
+        }
+
+
+        public void WriteBackToDicom(string filePath, int[,,] doseMatrix, int Xsize, int Ysize, int Zsize)
+        {
             List<byte> byteArray = ConvertToByte(doseMatrix, Xsize, Ysize, Zsize);
+            var dcm = DICOMObject.Read(filePath);
             dcm.FindFirst(TagHelper.PixelData).DData_ = byteArray;
             dcm.Write(filePath);
         }
@@ -306,6 +379,32 @@ namespace EQD2Converter
             return byteArray;
         }
 
+        public Tuple<int, int> GetMinMaxValues(int[,,] array, int Xsize, int Ysize, int Zsize)
+        {
+            int min = 0;
+            int max = 0;
+
+            for (int i = 0; i < Xsize; i++)
+            {
+                for (int j = 0; j < Ysize; j++)
+                {
+                    for (int k = 0; k < Zsize; k++)
+                    {
+                        int temp = array[k, i, j];
+
+                        if (temp > max)
+                        {
+                            max = temp;
+                        }
+                        else if (temp < min)
+                        {
+                            min = temp;
+                        }
+                    }
+                }
+            }
+            return Tuple.Create(min, max);
+        }
 
         public int GetIndexFromCoordinate(double coord, double origin, double direction, double res)
         {
@@ -415,7 +514,6 @@ namespace EQD2Converter
                         if (profilePoints[p] && this.existingIndexes.Contains(newIndices) == false)
                         {
                             int dose = doseMatrix[k, imin + p, j];
-
                             doseMatrix[k, imin + p, j] = functionCalculate(dose, alphabeta, scaling);
 
                             this.existingIndexes.Add(newIndices);
@@ -439,6 +537,17 @@ namespace EQD2Converter
         public int MultiplyByAlphaBeta(int dose, double alphabeta, double scaling)
         {
             return Convert.ToInt32(dose * alphabeta);
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            int[,,] convdose = ConvertDose(true, "");
+            Tuple<int, int> minMaxConverted = GetMinMaxValues(convdose, convdose.GetLength(1), convdose.GetLength(2), convdose.GetLength(0));
+            
+            PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray, 
+                this.scaling, this.doseMin, this.doseMax, minMaxConverted.Item1, minMaxConverted.Item2);
+            
+            previewWindow.ShowDialog();
         }
     }
 }

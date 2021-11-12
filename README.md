@@ -1,5 +1,5 @@
 # EQD2/BED converter
-This script converts nominal dose distributions to EQD2 or BED dose distributions. It should be used only for experimentation purposes.
+This Varian ESAPI script converts nominal dose distributions to EQD2 or BED dose distributions. It should be used only for experimentation purposes.
 
 ![image](image_asc2.png)
 
@@ -8,11 +8,11 @@ This script converts nominal dose distributions to EQD2 or BED dose distribution
 To use the script, you must compile it on your system. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file in Dosimetry folder. 
 The script was developed for Eclipse version 15.6. It may not work with other versions of Eclipse or Varian ESAPI.
 
-1. You will need to restore NuGet package for compilation: Evil-Dicom version 2.0.4. Right click the solution -> Restore NuGet packages.
+1. You will need to restore NuGet package for compilation: Evil-Dicom version 2.0.4, and OxyPlot. Right click the solution -> Restore NuGet packages.
 2. Don't forget the references to Varian dlls.
 3. Compile as Release for x64.
 
-## How to use
+## How to use the script
 
 Because it is not possible to modify the dose matrix inside ESAPI, a trick is needed. The dose distribution is modified outside Eclipse with EvilDICOM, and is then imported back to Eclipse:
 
@@ -23,6 +23,22 @@ Because it is not possible to modify the dose matrix inside ESAPI, a trick is ne
 5. When you see the message "Done!", close the script.
 6. Create a new plan in Eclipse. Do not add fields to the plan, but make sure that the StructureSet assigned is the same as in the original plan.
 7. Import the dicom dose file and attach it to the created empty plan. That is all. At the end you will have a plan without any fields, but with a valid dose distribution.
+
+## How to preview the conversion
+
+You can also preview the conversion without actually saving it to dicom. Edit the alpha/beta table and click **Preview**. A new window will pop up. On the left side you can select which structures you would like to see superimposed on the dose plot. The left and right OxyPlot regions will show the original and modified dose distributions. Here is a list of hints:
+
+* You can scroll both dose distributions with the scroll wheel or by moving the bottom slider left and right.
+* The right (modified) dose distribution is linked with the left dose distribution, but not vice-versa. To pan the distribution press the middle mouse button or use the keyboard arrow keys. To region-zoom the distribution right click and draw a rectangle. To reset the display double right click. To zoom in/out press the CTRL button and scroll.
+* Left mouse button displays the tracker. The tracker is synced between both plots.
+* Both distributions use the same colormap. You can change the range of the colors by moving the slider on the right side, or by entering new values in the text boxes. When you type in a new value you must hit the Enter key.
+* You can change the selection of structures in-vivo. If you press the CTRL key, you can select multiple structures.
+
+Dose is displayed in Grays. If you don't see the correct unit, send me a message. It should be easy to fix the script for other units. More is to come when I find the time.
+
+Another thing, the displayed dose in the Preview window may not exactly match with the absolute value of dose which is inserted into dicom. The reason is that I did not use the internal function to convert raw pixel values into user units because it works extremely slow. Instead, I calculated the dose scaling factor (equal to the one in dicom) by dividing the max dose in the 3D distribution that Eclipse returns quickly and the max integer value in the raw dose matrix. 
+
+![image](image_asc3.png)
 
 
 ## Details
@@ -35,6 +51,12 @@ Because it is not possible to modify the dose matrix inside ESAPI, a trick is ne
 
 
 ![image](image_asc.png)
+
+
+## Log
+
+* (12.11.2021) Added the preview window.
+
 
 ## Important note
 
