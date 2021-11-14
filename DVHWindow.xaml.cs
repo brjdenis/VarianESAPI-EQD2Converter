@@ -114,7 +114,7 @@ namespace EQD2Converter
 
             foreach (var structure in this.scriptcontext.StructureSet.Structures.OrderBy(u => u.Id).ToList())
             {
-                if (!structure.IsEmpty & structure.DicomType != "SUPPORT")
+                if (!structure.IsEmpty & structure.DicomType != "SUPPORT" & structure.DicomType != "MARKER" & structure.DicomType != "BOLUS")
                 {
                     structureList.Add(structure.Id);
                 }

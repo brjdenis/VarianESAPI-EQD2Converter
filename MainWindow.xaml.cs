@@ -77,7 +77,7 @@ namespace EQD2Converter
 
             foreach (var structure in scriptcontext.StructureSet.Structures.OrderBy(u => u.Id).ToList())
             {
-                if (!structure.IsEmpty)
+                if (!structure.IsEmpty & structure.DicomType != "SUPPORT" & structure.DicomType != "MARKER" & structure.DicomType != "BOLUS")
                 {
                     DataGridStructures item = new DataGridStructures()
                     {
