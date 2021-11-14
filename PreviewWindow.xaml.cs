@@ -270,7 +270,7 @@ namespace EQD2Converter
         {
             List<string> structureList = new List<string>() { };
 
-            foreach (var structure in this.scriptcontext.StructureSet.Structures.ToList())
+            foreach (var structure in this.scriptcontext.StructureSet.Structures.OrderBy(u => u.Id).ToList())
             {
                 if (!structure.IsEmpty)
                 {
@@ -577,7 +577,7 @@ namespace EQD2Converter
                 Structure structure = this.scriptcontext.StructureSet.Structures.First(u => u.Id == item);
                 structureList.Add(structure);
             }
-            return structureList.OrderBy(u => u.Id).ToList();
+            return structureList;
         }
 
         private void StructureListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -585,6 +585,13 @@ namespace EQD2Converter
             AddStructureContour();
             this.PlotModelOriginal.InvalidatePlot(true);
             this.PlotModelConverted.InvalidatePlot(true);
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            DVHWindow dvhwindow = new DVHWindow(this.scriptcontext, this.convertedArray, this.scaling);
+            dvhwindow.Owner = this;
+            dvhwindow.Show();
         }
     }
 }

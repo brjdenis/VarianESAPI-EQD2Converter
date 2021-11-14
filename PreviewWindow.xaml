@@ -47,8 +47,18 @@
             <ListView x:Name="StructureListView" Grid.Row="0" Grid.Column="0" SelectionChanged="StructureListView_SelectionChanged"></ListView>
             <oxy:PlotView x:Name="PlotOriginal" Grid.Row="0" Grid.Column="1" Width="600" Height="500" IsMouseWheelEnabled="True" VerticalAlignment="Top" PreviewMouseWheel="PlotOriginal_PreviewMouseWheel"/>
             <oxy:PlotView x:Name="PlotConverted" Grid.Row="0" Grid.Column="2" Width="600" Height="500" IsMouseWheelEnabled="True" VerticalAlignment="Top" PreviewMouseWheel="PlotOriginal_PreviewMouseWheel"/>
-            <Slider x:Name="SliceSlider" Margin="10,0,0,0" Orientation="Horizontal" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" SmallChange="1" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"></Slider>
-            
+
+            <Grid Margin="10,0,0,0" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Slider x:Name="SliceSlider"  Orientation="Horizontal" Grid.Row="0" Grid.Column="0" SmallChange="1" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"></Slider>
+                <Button Margin="0,30,0,0" Content="DVH" Grid.Row="1" Grid.Column="0" Width="70" Height="35" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Button_Click"></Button>
+            </Grid>
             <Grid Grid.Row="0" Grid.Column="3" VerticalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

@@ -38,7 +38,17 @@ Dose is displayed in Grays. If you don't see the correct unit, send me a message
 
 Another thing, the displayed dose in the Preview window may not exactly match with the absolute value of dose which is inserted into dicom. The reason is that I did not use the internal function to convert raw pixel values into user units because it works extremely slow. Instead, I calculated the dose scaling factor (equal to the one in dicom) by dividing the max dose in the 3D distribution that Eclipse returns quickly and the max integer value in the raw dose matrix. 
 
+Note as well that the displayed contours are not interpolated between image slices.
+
 ![image](image_asc3.png)
+
+## Dose-volume histogram
+
+You can preview the DVH by clicking the DVH button. A new window will open. Solid lines are calculated with Eclipse on the original dose distribution. Dashed lines are calculated from the modified (converted) dose distribution. There is no additional sampling of the dose distribution, the algorithm only uses the dose voxels to calculate the histogram. This means that the accuracy of the histogram is low. However, in most case, when one is trying to estimate things, it will work. If you wish to increase the accuracy, you must recalculate the dose with smaller voxels.
+
+When a particular structure is not fully covered with dose, the calculation result in this script will be similar to that of Eclipse.
+
+![image](image_asc4.png)
 
 
 ## Details

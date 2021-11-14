@@ -75,7 +75,7 @@ namespace EQD2Converter
         {
             List<DataGridStructures> datagrid = new List<DataGridStructures>() { };
 
-            foreach (var structure in scriptcontext.StructureSet.Structures.ToList())
+            foreach (var structure in scriptcontext.StructureSet.Structures.OrderBy(u => u.Id).ToList())
             {
                 if (!structure.IsEmpty)
                 {
@@ -381,7 +381,7 @@ namespace EQD2Converter
 
         public Tuple<int, int> GetMinMaxValues(int[,,] array, int Xsize, int Ysize, int Zsize)
         {
-            int min = 0;
+            int min = Int32.MaxValue;
             int max = 0;
 
             for (int i = 0; i < Xsize; i++)
