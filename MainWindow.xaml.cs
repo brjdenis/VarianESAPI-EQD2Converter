@@ -1,8 +1,4 @@
-﻿using EvilDICOM.Core;
-using EvilDICOM.Core.Element;
-using EvilDICOM.Core.Helpers;
-using EvilDICOM.Core.Image;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -48,7 +44,6 @@ namespace EQD2Converter
 
         public MainWindow(ScriptContext scriptcontext)
         {
-
             this.scriptcontext = scriptcontext;
             this.numberOfFractions = (int)scriptcontext.ExternalPlanSetup.NumberOfFractions;
 
@@ -125,19 +120,8 @@ namespace EQD2Converter
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-
-                Nullable<bool> result = dlg.ShowDialog();
-
-                if (result == true)
-                {
-                    ConvertDose(false, dlg.FileName);
-                    MessageBox.Show("Done!", "Message");
-                }
-                else
-                {
-                    MessageBox.Show("No dicom selected.", "Error");
-                }
+                ConvertDose(false);
+                MessageBox.Show("A new verification plan was created with a modified dose distribution.", "Message");
             }
             catch (Exception f)
             {
@@ -145,55 +129,6 @@ namespace EQD2Converter
             }
         }
 
-        public void ReadFromDicom(string filePath)
-        {
-            // Not used, but included in case I need it at some point
-
-            var dcm = DICOMObject.Read(filePath);
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
-
-            List<double> offsetVector = (List<double>)dcm.FindFirst(TagHelper.GridFrameOffsetVector).DData_;
-            int frames = offsetVector.Count;
-
-            double scaling = 1.0;
-            var _scaling = dcm.FindFirst(TagHelper.DoseGridScaling) as AbstractElement<double>;
-            if (_scaling != null)
-            {
-                scaling = _scaling.Data;
-            }
-
-            int[,,] doseMatrix = new int[frames, columns, rows];
-
-            int indexColumn = 0;
-            int indexRow = 0;
-            int indexFrame = 0;
-
-            for (int i = 0; i < pixelData.Count(); i += 4)
-            {
-                // taken from https://stackoverflow.com/questions/55883798/wrong-output-pixel-colors-grayscale-using-evildicom
-                // 32 bits
-
-                int pixel = (int)(pixelData[i + 3] * 256 * 256 * 256 + pixelData[i + 2] * 256 * 256 + pixelData[i + 1] * 256 + pixelData[i]);
-
-                doseMatrix[indexFrame, indexColumn, indexRow] = pixel;
-
-                indexColumn += 1;
-                if (indexColumn > columns - 1)
-                {
-                    indexColumn = 0;
-                    indexRow += 1;
-                }
-                if (indexRow > rows - 1)
-                {
-                    indexFrame += 1;
-                    indexColumn = 0;
-                    indexRow = 0;
-                }
-            }
-        }
 
         public int[,,] GetDoseVoxelsFromDose(Dose dose)
         {
@@ -220,7 +155,7 @@ namespace EQD2Converter
             return doseMatrix;
         }
 
-        public int[,,] ConvertDose(bool preview = false, string filePath = "")
+        public int[,,] ConvertDose(bool preview = false)
         {
             Dose dose = this.scriptcontext.ExternalPlanSetup.Dose;
 
@@ -240,53 +175,35 @@ namespace EQD2Converter
 
             int[,,] doseMatrix = GetDoseVoxelsFromDose(dose);
 
-            this.originalArray = GetDoseVoxelsFromDose(dose);
+            this.originalArray = GetDoseVoxelsFromDose(dose); // a copy
 
-            // If only preview is sought calculate scaling factor from max dose
-            double scaling = 1.0;
+            DoseValue maxDose = dose.DoseMax3D;
+            double maxDoseVal = maxDose.Dose;
 
-            if (preview)
+            if (maxDose.IsRelativeDoseValue)
             {
-                DoseValue maxDose = dose.DoseMax3D;
-                double maxDoseVal = maxDose.Dose;
-
-                if (maxDose.IsRelativeDoseValue)
+                if (this.scriptcontext.ExternalPlanSetup.TotalDose.Unit == DoseValue.DoseUnit.cGy)
                 {
-                    if (this.scriptcontext.ExternalPlanSetup.TotalDose.Unit == DoseValue.DoseUnit.cGy)
-                    {
-                        maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 10000.0;
-                    }
-                    else
-                    {
-                        maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 100.0;
-                    }
+                    maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 10000.0;
                 }
-
-                if (maxDose.Unit == DoseValue.DoseUnit.cGy)
+                else
                 {
-                    maxDoseVal = maxDoseVal / 100.0;
-                }
-
-                Tuple<int, int> minMaxDose = GetMinMaxValues(doseMatrix, Xsize, Ysize, Zsize);
-
-                scaling = maxDoseVal / minMaxDose.Item2;
-
-                this.doseMin = minMaxDose.Item1 * scaling;
-                this.doseMax = minMaxDose.Item2 * scaling;
-            }
-
-            else
-            {
-                var dcm = DICOMObject.Read(filePath);
-
-                var _scaling = dcm.FindFirst(TagHelper.DoseGridScaling) as AbstractElement<double>;
-                if (_scaling != null)
-                {
-                    scaling = _scaling.Data;
+                    maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 100.0;
                 }
             }
 
+            if (maxDose.Unit == DoseValue.DoseUnit.cGy)
+            {
+                maxDoseVal = maxDoseVal / 100.0;
+            }
+
+            Tuple<int, int> minMaxDose = GetMinMaxValues(doseMatrix, Xsize, Ysize, Zsize);
+
+            double scaling = maxDoseVal / minMaxDose.Item2;
             this.scaling = scaling;
+
+            this.doseMin = minMaxDose.Item1 * scaling;
+            this.doseMax = minMaxDose.Item2 * scaling;
 
             Dictionary<Structure, double> structureDict = new Dictionary<Structure, double>() { };
 
@@ -334,50 +251,51 @@ namespace EQD2Converter
                 }
             }
 
+            this.existingIndexes = new HashSet<Tuple<int, int, int>>() { }; // reset!
+
             if (!preview)
             {
-                WriteBackToDicom(filePath, doseMatrix, Xsize, Ysize, Zsize);
-                this.existingIndexes = new HashSet<Tuple<int, int, int>>() { }; // reset!
+                CreatePlanAndAddDose(Xsize, Ysize, Zsize, doseMatrix);
                 return new int[0, 0, 0];
             }
             else
             {
-                this.existingIndexes = new HashSet<Tuple<int, int, int>>() { }; // reset!
                 return doseMatrix;
             }
         }
 
-
-        public void WriteBackToDicom(string filePath, int[,,] doseMatrix, int Xsize, int Ysize, int Zsize)
+        public void CreatePlanAndAddDose(int Xsize, int Ysize, int Zsize, int[,,] doseMatrix)
         {
-            List<byte> byteArray = ConvertToByte(doseMatrix, Xsize, Ysize, Zsize);
-            var dcm = DICOMObject.Read(filePath);
-            dcm.FindFirst(TagHelper.PixelData).DData_ = byteArray;
-            dcm.Write(filePath);
-        }
+            ExternalPlanSetup newPlan = this.scriptcontext.Course.AddExternalPlanSetupAsVerificationPlan(this.scriptcontext.StructureSet, this.scriptcontext.ExternalPlanSetup);
 
+            int fractions = (int)this.scriptcontext.ExternalPlanSetup.NumberOfFractions;
+            DoseValue dosePerFraction = this.scriptcontext.ExternalPlanSetup.DosePerFraction;
+            double treatPercentage = this.scriptcontext.ExternalPlanSetup.TreatmentPercentage;
+            double normalization = this.scriptcontext.ExternalPlanSetup.PlanNormalizationValue;
 
-        public List<byte> ConvertToByte(int[,,] array, int columns, int rows, int frames)
-        {
-            // This function converts int[,,] into 32-bit byte array so that it can be written to dicom
-            List<byte> byteArray = new List<byte>() { };
+            newPlan.SetPrescription(fractions, dosePerFraction, treatPercentage);
 
-            for (int i = 0; i < frames; i++)
+            if (!Double.IsNaN(normalization))
             {
-                for (int j = 0; j < rows; j++)
+                newPlan.PlanNormalizationValue = normalization;
+            }
+
+            EvaluationDose evalDose = newPlan.CopyEvaluationDose(this.scriptcontext.ExternalPlanSetup.Dose);
+
+            for (int k = 0; k < Zsize; k++)
+            {
+                int[,] plane = new int[Xsize, Ysize];
+                for (int i = 0; i < Xsize; i++)
                 {
-                    for (int k = 0; k < columns; k++)
+                    for (int j = 0; j < Ysize; j++)
                     {
-                        byte[] intBytes = BitConverter.GetBytes(array[i, k, j]);
-                        byteArray.Add(intBytes[0]);
-                        byteArray.Add(intBytes[1]);
-                        byteArray.Add(intBytes[2]);
-                        byteArray.Add(intBytes[3]);
+                        plane[i, j] = doseMatrix[k, i, j];
                     }
                 }
+                evalDose.SetVoxels(k, plane);
             }
-            return byteArray;
         }
+
 
         public Tuple<int, int> GetMinMaxValues(int[,,] array, int Xsize, int Ysize, int Zsize)
         {
@@ -541,10 +459,10 @@ namespace EQD2Converter
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            int[,,] convdose = ConvertDose(true, "");
+            int[,,] convdose = ConvertDose(true);
             Tuple<int, int> minMaxConverted = GetMinMaxValues(convdose, convdose.GetLength(1), convdose.GetLength(2), convdose.GetLength(0));
             
-            PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray, 
+            PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray,
                 this.scaling, this.doseMin, this.doseMax, minMaxConverted.Item1, minMaxConverted.Item2);
             
             previewWindow.ShowDialog();

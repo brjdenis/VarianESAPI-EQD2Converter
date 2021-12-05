@@ -54,7 +54,7 @@
             <ComboBox x:Name="ComboBox" Width="100" Height="30" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
             <Label Content="Convert to:" VerticalAlignment="Center"></Label>
             <ComboBox x:Name="ComboBox2" Width="80" Height="30" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
-            <Button Margin="10,0,0,0"  Height="30" Width="200" Content="Select input dicom and convert ..." Click="Button_Click"></Button>
+            <Button Margin="10,0,0,0"  Height="30" Width="200" Content="Create plan..." Click="Button_Click"></Button>
             <Button Margin="10,0,0,0"  Height="30" Width="100" Content="Preview" Click="Button_Click_1"></Button>
             <Label x:Name="Count"></Label>
         </StackPanel>

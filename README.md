@@ -8,25 +8,22 @@ This Varian ESAPI script converts nominal dose distributions to EQD2 or BED dose
 To use the script, you must compile it on your system. You should be able to open the project with Visual Studio 2019 Community Edition. Open the .sln file. 
 The script was developed for Eclipse version 15.6. It may not work with other versions of Eclipse or Varian ESAPI.
 
-1. You will need to restore NuGet package for compilation: Evil-Dicom version 2.0.4, and OxyPlot. Right click the solution -> Restore NuGet packages.
+1. You will need to restore NuGet package for compilation: OxyPlot. Right click the solution -> Restore NuGet packages.
 2. Don't forget the references to Varian dlls.
 3. Compile as Release for x64.
 
 ## How to use the script
 
-Because it is not possible to modify the dose matrix inside ESAPI, a trick is needed. The dose distribution is modified outside Eclipse with EvilDICOM, and is then imported back to Eclipse:
+To use the script, do this:
 
-1. Copy the plan that you would like to convert to EQD2/BED. 
-2. Export the plan dose distribution of the copied plan to an external dicom file.
-3. Delete the copy of the plan in Eclipse.
-4. Run the script on the original plan. Define alpha/beta and click the button. Pick the exported dicom file when asked.
-5. When you see the message "Done!", close the script.
-6. Create a new plan in Eclipse. Do not add fields to the plan, but make sure that the StructureSet assigned is the same as in the original plan.
-7. Import the dicom dose file and attach it to the created empty plan. That is all. At the end you will have a plan without any fields, but with a valid dose distribution.
+1. Run the script on the original plan. Define alpha/beta and click the button "Create plan...".
+2. When you see the message "Done!", close the script.
+3. A verification plan will show up in the tree. This plan has no beams, only a (modified) dose distribution.
+4. You can use this plan to create plan sums etc.
 
 ## How to preview the conversion
 
-You can also preview the conversion without actually saving it to dicom. Edit the alpha/beta table and click **Preview**. A new window will pop up. On the left side you can select which structures you would like to see superimposed on the dose plot. The left and right OxyPlot regions will show the original and modified dose distributions. Here is a list of hints:
+You can also preview the conversion without actually saving it to a verification plan. Edit the alpha/beta table and click **Preview**. A new window will pop up. On the left side you can select which structures you would like to see superimposed on the dose plot. The left and right OxyPlot regions will show the original and modified dose distributions. Here is a list of hints:
 
 * You can scroll both dose distributions with the scroll wheel or by moving the bottom slider left and right.
 * The right (modified) dose distribution is linked with the left dose distribution, but not vice-versa. To pan the distribution press the middle mouse button or use the keyboard arrow keys. To region-zoom the distribution right click and draw a rectangle. To reset the display double right click. To zoom in/out press the CTRL button and scroll.
@@ -34,9 +31,9 @@ You can also preview the conversion without actually saving it to dicom. Edit th
 * Both distributions use the same colormap. You can change the range of the colors by moving the slider on the right side, or by entering new values in the text boxes. When you type in a new value you must hit the Enter key.
 * You can change the selection of structures in-vivo. If you press the CTRL key, you can select multiple structures.
 
-Dose is displayed in Grays. If you don't see the correct unit, send me a message. It should be easy to fix the script for other units. More is to come when I find the time.
+Dose is displayed in Grays. If you don't see the correct unit, create a new issue or start a new discussion. It should be easy to fix the script for other units. More is to come when I find the time.
 
-Another thing, the displayed dose in the Preview window may not exactly match with the absolute value of dose which is inserted into dicom. The reason is that I did not use the internal function to convert raw pixel values into user units because it works extremely slow. Instead, I calculated the dose scaling factor (equal to the one in dicom) by dividing the max dose in the 3D distribution that Eclipse returns quickly and the max integer value in the raw dose matrix. 
+Another thing, if you create a verification plan with no a/b modifications, the resulting absolute dose distribution may not be exactly equal to the original dose distribution. The reason is that I did not use the internal function to convert raw pixel values into user units because I had problems with it. Instead, I calculated the dose scaling factor (equal to the one in dicom) by dividing the max dose in the 3D distribution that Eclipse returns quickly and the max integer value in the raw dose matrix (that Eclipse returns when GetVoxels is called). 
 
 Note as well that the displayed contours are not interpolated between image slices.
 
@@ -44,9 +41,9 @@ Note as well that the displayed contours are not interpolated between image slic
 
 ## Dose-volume histogram
 
-You can preview the DVH by clicking the DVH button. A new window will open. Solid lines are calculated with Eclipse on the original dose distribution. Dashed lines are calculated from the modified (converted) dose distribution. There is no additional sampling of the dose distribution, the algorithm only uses the dose voxels to calculate the histogram. This means that the accuracy of the histogram is low. However, in most case, when one is trying to estimate things, it will work. If you wish to increase the accuracy, you must recalculate the dose with smaller voxels.
+You can preview the DVH by clicking the DVH button. A new window will open. Solid lines are calculated with Eclipse on the original dose distribution. Dashed lines are calculated from the modified (converted) dose distribution. The calculation for the latter uses the simplest algorithm possible. There is no additional sampling of the dose distribution, the algorithm only uses the raw dose voxels with centers inside the structure to calculate the histogram. This means that the accuracy of the histogram is low, because on the edges of the structure we are loosing bins that would contribute to the histogram. However, in most case, when one is trying to estimate things, it will work. If you wish to increase the accuracy, you must recalculate the dose with smaller voxels.
 
-When a particular structure is not fully covered with dose, the calculation result in this script will be similar to that of Eclipse.
+When a particular structure is not fully covered with dose, the calculation result in this script will be similar to that of Eclipse. This is sort of botched-up with some rescaling just to get the volume at dose 0 to be the same.
 
 ![image](image_asc4.png)
 
@@ -54,10 +51,11 @@ When a particular structure is not fully covered with dose, the calculation resu
 ## Details
 
 1. The calculation is performed with the well known formulas: EQD2 = D ( a/b + D/n) / (a/b + 2) and BED = D (1 + D / ( n a/b)). The third option, Multiply by a/b, is for testing purposes, ie. it simply multiples each voxel value with a/b.
-2. The accuracy of conversion equals the width of the dose matrix box. Do some testing to see how it works. The scanning for voxels inside structures is done only in the X direction.
-3. When you define a/b for each structure, you have to decide how the script will deal with overlapping regions. Using "Ascending": structures will be ordered in ascending order of a/b. Meaning that the structure with lower a/b will have all voxels overridden with new values, but the overlapping part of structures with higher a/b will not have values overridden for those voxels that are inside structures with lower a/b. For "Descending" the opposite applies. See image below.
-4. If you need better accuracy, calculate the original plan with smaller dose box width.
-5. The conversion should (only) work for HFS, HFP, FFS, FFP orientations. If you are summing up plans based on different registered images, the result may be wrong. I haven't had time to test this.
+2. The accuracy of conversion equals the width of the dose matrix box. Do some testing to see how it works.
+3. The scanning for voxels inside structures is done only in the X direction.
+4. When you define a/b for each structure, you have to decide how the script will deal with overlapping regions. Using "Ascending": structures will be ordered in ascending order of a/b. Meaning that the structure with lower a/b will have all voxels overridden with new values, but the overlapping part of structures with higher a/b will not have values overridden for those voxels that are inside structures with lower a/b. For "Descending" the opposite applies. See image below.
+5. If you need better accuracy, calculate the original plan with smaller dose box width.
+6. The conversion should (only) work for HFS, HFP, FFS, FFP orientations. If you are summing up plans based on different registered images, the result may be wrong. I haven't had time to test this.
 
 
 ![image](image_asc.png)
@@ -66,6 +64,7 @@ When a particular structure is not fully covered with dose, the calculation resu
 ## Log
 
 * (12.11.2021) Added the preview window.
+* (5.12.2021) Changed the script completely, following the suggestion by @Kiragroh. Now exporting and importing the dose matrix is not needed, everything is done in Eclipse.
 
 
 ## Important note
