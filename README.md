@@ -21,6 +21,8 @@ To use the script, do this:
 3. A verification plan will show up in the tree. This plan has no beams, only a (modified) dose distribution.
 4. You can use this plan to create plan sums etc.
 
+![image](image_asc4.png)
+
 ## How to preview the conversion
 
 You can also preview the conversion without actually saving it to a verification plan. Edit the alpha/beta table and click **Preview**. A new window will pop up. On the left side you can select which structures you would like to see superimposed on the dose plot. The left and right OxyPlot regions will show the original and modified dose distributions. Here is a list of hints:
