@@ -21,7 +21,6 @@ To use the script, do this:
 3. A verification plan will show up in the tree. This plan has no beams, only a (modified) dose distribution.
 4. You can use this plan to create plan sums etc.
 
-![image](image_asc5.png)
 
 ## How to preview the conversion
 
