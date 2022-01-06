@@ -33,10 +33,11 @@ namespace EQD2Converter
         public PlotModel PlotModelDVH { get; set; }
 
         public LinearAxis AxisXDVH = new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Title = "Dose [Gy]"};
-        public LinearAxis AxisYDVH = new LinearAxis { Position = AxisPosition.Left, Minimum = 0 , Title = "Volume [%]"};
+        public LinearAxis AxisYDVH = new LinearAxis { Position = AxisPosition.Left, Minimum = 0 , Title = "Volume [%]" };
 
         public List<DataGridDoseData> DataGridDoseDataList = new List<DataGridDoseData>() { };
         public ListCollectionView DataGridDoseDataCollection { get; set; }
+
 
         public DVHWindow(ScriptContext scriptcontext, List<double[,]> _convertedArray, double scaling)
         {
@@ -81,7 +82,6 @@ namespace EQD2Converter
         {
             this.PlotDVH.Width = this.PlotOriginalColumn.ActualWidth;
             this.PlotDVH.Height = this.PlotOriginalRow.ActualHeight;
-
         }
 
         public List<double[,]> InvertArrayYAxis(List<double[,]> array)
@@ -127,12 +127,11 @@ namespace EQD2Converter
             List<string> structureList = GetStructureList();
 
             this.StructureListView.ItemsSource = structureList;
-            //this.StructureListView.SelectAll();
         }
 
         public List<string> GetSelectedStructures()
         {
-            List<string> structureList = new List<string>() {  };
+            List<string> structureList = new List<string>() { };
             foreach(var item in this.StructureListView.SelectedItems)
             {
                 structureList.Add(item.ToString());
@@ -146,7 +145,6 @@ namespace EQD2Converter
             {
                 AddSeriesDVH(this.PlotModelDVH);
                 this.PlotModelDVH.InvalidatePlot(true);
-                this.PlotModelDVH.InvalidatePlot(true);
             }
         }
 
@@ -158,6 +156,7 @@ namespace EQD2Converter
 
             return plotModel;
         }
+
 
         public void SetController()
         {
@@ -176,7 +175,6 @@ namespace EQD2Converter
             myController.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.None, OxyPlot.PlotCommands.ZoomRectangle);
             myController.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.None, 2, OxyPlot.PlotCommands.ResetAt);
             myController.BindMouseDown(OxyMouseButton.Middle, OxyModifierKeys.None, OxyPlot.PlotCommands.PanAt);
-
         }
 
 
@@ -252,7 +250,7 @@ namespace EQD2Converter
                     Title = structure.Id + " (Eclipse)",
                     Tag = structure.Id + "_Eclipse",
                     Color = structure.Color.ToOxyColor(),
-                    TrackerFormatString = "{0}\n{1}: {2:0.##}\n{3}: {4:0.##}",
+                    TrackerFormatString = "{0}\n{1}: {2:0.##}\n{3}: {4:0.##}"
                 };
 
                 foreach (var point in pointsEclipse)
@@ -277,7 +275,7 @@ namespace EQD2Converter
                     Tag = structure.Id + "_Converted",
                     Color = structure.Color.ToOxyColor(),
                     LineStyle = LineStyle.Dash,
-                    TrackerFormatString = "{0}\n{1}: {2:0.##}\n{3}: {4:0.##}",
+                    TrackerFormatString = "{0}\n{1}: {2:0.##}\n{3}: {4:0.##}"
                 };
 
                 foreach (var point in pointsConverted)
@@ -526,6 +524,38 @@ namespace EQD2Converter
                 doseHits.Add(new DataPoint(doseAt, 100.0 * (hits / dataLength) * doseCoverageEclipse));
             }
             return Tuple.Create(doseHits, doseMin, doseEdge[N - 1], doseMean);
+        }
+
+
+        private void CheckBoxColors_Changed(object sender, RoutedEventArgs e)
+        {
+            if ((bool)this.CheckBoxColors.IsChecked)
+            {
+                this.PlotModelDVH.Background = OxyColors.Black;
+                this.PlotModelDVH.TextColor = OxyColors.White;
+                this.PlotModelDVH.SelectionColor = OxyColors.White;
+                this.PlotModelDVH.PlotAreaBorderColor = OxyColors.White;
+                this.AxisXDVH.AxislineColor = OxyColors.White;
+                this.AxisYDVH.AxislineColor = OxyColors.White;
+                this.AxisXDVH.TextColor = OxyColors.White;
+                this.AxisYDVH.TextColor = OxyColors.White;
+                this.AxisXDVH.TicklineColor = OxyColors.White;
+                this.AxisYDVH.TicklineColor = OxyColors.White;
+            }
+            else
+            {
+                this.PlotModelDVH.Background = OxyColors.White;
+                this.PlotModelDVH.TextColor = OxyColors.Black;
+                this.PlotModelDVH.SelectionColor = OxyColors.Black;
+                this.PlotModelDVH.PlotAreaBorderColor = OxyColors.Black;
+                this.AxisXDVH.AxislineColor = OxyColors.Black;
+                this.AxisYDVH.AxislineColor = OxyColors.Black;
+                this.AxisXDVH.TextColor = OxyColors.Black;
+                this.AxisYDVH.TextColor = OxyColors.Black;
+                this.AxisXDVH.TicklineColor = OxyColors.Black;
+                this.AxisYDVH.TicklineColor = OxyColors.Black;
+            }
+            this.PlotModelDVH.InvalidatePlot(true);
         }
     }
 }

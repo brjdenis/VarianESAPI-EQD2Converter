@@ -32,6 +32,8 @@ namespace EQD2Converter
         public int numberOfFractions;
 
         public double scaling;
+        public double scaling2; // scaling evaluation dose (may be different than scaling if plan imported into eclipse)
+        public double scaling3; // aux scaling for those plan that were imported into eclipse
 
         public HashSet<Tuple<int, int, int>> existingIndexes = new HashSet<Tuple<int, int, int>>() { };
 
@@ -118,14 +120,53 @@ namespace EQD2Converter
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            try
+            PlanNameWindow planNameWindow = new PlanNameWindow(this.scriptcontext, this.scriptcontext.ExternalPlanSetup.Id + "_" + this.ComboBox2.SelectedValue.ToString());
+            planNameWindow.ShowDialog();
+
+            string newPlanName = planNameWindow.PlanName;
+            ExternalPlanSetup newPlan = (ExternalPlanSetup)null;
+            
+            if (planNameWindow.DialogResult.HasValue && planNameWindow.DialogResult.Value)
             {
-                ConvertDose(false);
-                MessageBox.Show("A new verification plan was created with a modified dose distribution.", "Message");
+
+                try
+                {
+                    newPlan = this.scriptcontext.Course.AddExternalPlanSetupAsVerificationPlan(this.scriptcontext.StructureSet, this.scriptcontext.ExternalPlanSetup);
+                    newPlan.Id = newPlanName;
+                }
+                catch
+                {
+                    MessageBox.Show("Cannot create plan " + newPlanName + ".", "Error");
+                    return;
+                }
+
+                // Add a waiting window here
+                this.Cursor = Cursors.Wait;
+                var waitWindow = new WaitingWindow();
+                waitWindow.Show();
+
+                try
+                {
+                    ConvertDose(newPlan, false);
+                }
+                catch (Exception f)
+                {
+                    waitWindow.Close();
+                    this.Cursor = null;
+                    MessageBox.Show(f.Message + "\n" + f.StackTrace, "Error");
+                }
+
+                waitWindow.Close();
+                this.Cursor = null;
+
+                MessageBox.Show("A new verification plan was created with a modified dose distribution.\n\n" +
+                        "Voxel value to dose scaling factor (original dose): " + this.scaling.ToString() + "\n" +
+                        "Voxel value to dose scaling factor (evaluation dose): " + this.scaling2.ToString() + "\n" +
+                        "Voxel value to voxel value scaling factor (evaluation dose): " + this.scaling3.ToString(), "Message");
             }
-            catch (Exception f)
+            else
             {
-                MessageBox.Show(f.Message + "\n" + f.StackTrace, "Error");
+                return;
             }
         }
 
@@ -155,7 +196,31 @@ namespace EQD2Converter
             return doseMatrix;
         }
 
-        public int[,,] ConvertDose(bool preview = false)
+        public double GetMaxDoseVal(Dose dose, ExternalPlanSetup plan)
+        {
+            DoseValue maxDose = dose.DoseMax3D;
+            double maxDoseVal = maxDose.Dose;
+
+            if (maxDose.IsRelativeDoseValue)
+            {
+                if (plan.TotalDose.Unit == DoseValue.DoseUnit.cGy)
+                {
+                    maxDoseVal = maxDoseVal * plan.TotalDose.Dose / 10000.0;
+                }
+                else
+                {
+                    maxDoseVal = maxDoseVal * plan.TotalDose.Dose / 100.0;
+                }
+            }
+
+            if (maxDose.Unit == DoseValue.DoseUnit.cGy)
+            {
+                maxDoseVal = maxDoseVal / 100.0;
+            }
+            return maxDoseVal;
+        }
+
+        public int[,,] ConvertDose(ExternalPlanSetup newPlan, bool preview = false)
         {
             Dose dose = this.scriptcontext.ExternalPlanSetup.Dose;
 
@@ -177,25 +242,7 @@ namespace EQD2Converter
 
             this.originalArray = GetDoseVoxelsFromDose(dose); // a copy
 
-            DoseValue maxDose = dose.DoseMax3D;
-            double maxDoseVal = maxDose.Dose;
-
-            if (maxDose.IsRelativeDoseValue)
-            {
-                if (this.scriptcontext.ExternalPlanSetup.TotalDose.Unit == DoseValue.DoseUnit.cGy)
-                {
-                    maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 10000.0;
-                }
-                else
-                {
-                    maxDoseVal = maxDoseVal * this.scriptcontext.ExternalPlanSetup.TotalDose.Dose / 100.0;
-                }
-            }
-
-            if (maxDose.Unit == DoseValue.DoseUnit.cGy)
-            {
-                maxDoseVal = maxDoseVal / 100.0;
-            }
+            double maxDoseVal = GetMaxDoseVal(dose, this.scriptcontext.ExternalPlanSetup);
 
             Tuple<int, int> minMaxDose = GetMinMaxValues(doseMatrix, Xsize, Ysize, Zsize);
 
@@ -255,7 +302,7 @@ namespace EQD2Converter
 
             if (!preview)
             {
-                CreatePlanAndAddDose(Xsize, Ysize, Zsize, doseMatrix);
+                CreatePlanAndAddDose(Xsize, Ysize, Zsize, doseMatrix, maxDoseVal, newPlan);
                 return new int[0, 0, 0];
             }
             else
@@ -264,35 +311,59 @@ namespace EQD2Converter
             }
         }
 
-        public void CreatePlanAndAddDose(int Xsize, int Ysize, int Zsize, int[,,] doseMatrix)
+        public void CreatePlanAndAddDose(int Xsize, int Ysize, int Zsize, int[,,] doseMatrix, double doseMaxOriginal, ExternalPlanSetup newPlan)
         {
-            ExternalPlanSetup newPlan = this.scriptcontext.Course.AddExternalPlanSetupAsVerificationPlan(this.scriptcontext.StructureSet, this.scriptcontext.ExternalPlanSetup);
-
             int fractions = (int)this.scriptcontext.ExternalPlanSetup.NumberOfFractions;
             DoseValue dosePerFraction = this.scriptcontext.ExternalPlanSetup.DosePerFraction;
             double treatPercentage = this.scriptcontext.ExternalPlanSetup.TreatmentPercentage;
-            double normalization = this.scriptcontext.ExternalPlanSetup.PlanNormalizationValue;
-
+            
             newPlan.SetPrescription(fractions, dosePerFraction, treatPercentage);
 
+            double normalization = this.scriptcontext.ExternalPlanSetup.PlanNormalizationValue;
             if (!Double.IsNaN(normalization))
             {
                 newPlan.PlanNormalizationValue = normalization;
             }
+            else
+            {
+                newPlan.PlanNormalizationValue = 100;
+            }
 
             EvaluationDose evalDose = newPlan.CopyEvaluationDose(this.scriptcontext.ExternalPlanSetup.Dose);
 
-            for (int k = 0; k < Zsize; k++)
+            double maxDoseVal = GetMaxDoseVal(evalDose, newPlan);
+            
+            Tuple<int, int> minMaxDoseInt = GetMinMaxValues(GetDoseVoxelsFromDose(evalDose), Xsize, Ysize, Zsize);
+            int maxInt = minMaxDoseInt.Item2;
+
+            double scaling2 = maxDoseVal / maxInt;
+            this.scaling2 = scaling2;
+
+            // scaling2 is used when a plan is imported into eclipse. In this case, the voxel values are correctly set,
+            // however the internal scaling factor differes from the original one after Evaluation dose is copied. Don't know why exactly.
+            // I solved this by introducing an additional scaling factor that in normal cases should equal 1.
+            // This factor is used to renormalize the voxels so that if no conversion is done, the result is equal to the original.
+            double scaling3 = doseMaxOriginal / maxDoseVal;
+            this.scaling3 = scaling3;
+
+            if (maxInt * scaling3 > 2147483647.0)
             {
-                int[,] plane = new int[Xsize, Ysize];
-                for (int i = 0; i < Xsize; i++)
+                throw new InvalidDataException("Maximum integer value exceeded. Conversion failed.");
+            }
+            else
+            {
+                for (int k = 0; k < Zsize; k++)
                 {
-                    for (int j = 0; j < Ysize; j++)
+                    int[,] plane = new int[Xsize, Ysize];
+                    for (int i = 0; i < Xsize; i++)
                     {
-                        plane[i, j] = doseMatrix[k, i, j];
+                        for (int j = 0; j < Ysize; j++)
+                        {
+                            plane[i, j] = (int)(doseMatrix[k, i, j] * scaling3);
+                        }
                     }
+                    evalDose.SetVoxels(k, plane);
                 }
-                evalDose.SetVoxels(k, plane);
             }
         }
 
@@ -459,13 +530,28 @@ namespace EQD2Converter
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            int[,,] convdose = ConvertDose(true);
+            // Show waiting window temporarily
+            this.Cursor = Cursors.Wait;
+            var waitWindow = new WaitingWindow();
+            waitWindow.Show();
+
+            int[,,] convdose = ConvertDose((ExternalPlanSetup)null, true);
             Tuple<int, int> minMaxConverted = GetMinMaxValues(convdose, convdose.GetLength(1), convdose.GetLength(2), convdose.GetLength(0));
-            
+
             PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray,
                 this.scaling, this.doseMin, this.doseMax, minMaxConverted.Item1, minMaxConverted.Item2);
-            
+
+            waitWindow.Close();
+            this.Cursor = null;
+
             previewWindow.ShowDialog();
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            HelpWindow helpwindow = new HelpWindow();
+            helpwindow.Owner = this;
+            helpwindow.Show();
         }
     }
 }

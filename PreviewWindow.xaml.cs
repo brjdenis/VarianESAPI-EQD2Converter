@@ -148,7 +148,7 @@ namespace EQD2Converter
                 DataPoint dataPosition = this.imageHeatMapDoseConverted.InverseTransform(currentPosition);
                 ScreenPoint screenPositionOriginal = this.imageHeatMapDoseOriginal.Transform(dataPosition);
                 TrackerHitResult result = this.imageHeatMapDoseOriginal.GetNearestPoint(screenPositionOriginal, false);
-         
+
                 this.PlotOriginal.ShowTracker(result);
             }
             else
@@ -214,7 +214,7 @@ namespace EQD2Converter
             this.PlotConverted.Height = this.PlotOriginalRow.ActualHeight;
             //this.PlotModelOriginal.ResetAllAxes();
             //this.PlotModelOriginal.InvalidatePlot(true);
-        }   
+        }
 
 
         public List<double[,]> ConvertArrayToDouble(int[,,] array)
@@ -326,7 +326,7 @@ namespace EQD2Converter
 
             var myController = new PlotController();
             this.PlotOriginal.Controller = myController;
-            
+
             myController.UnbindMouseWheel();
 
             myController.UnbindMouseDown(OxyMouseButton.Middle, OxyModifierKeys.Control);
@@ -392,6 +392,9 @@ namespace EQD2Converter
 
             this.PlotModelOriginal.InvalidatePlot(true);
             this.PlotModelConverted.InvalidatePlot(true);
+
+            this.DoseSlice.Content = "Dose slice: " + this.CurrentSlice.ToString();
+            this.ImageSlice.Content = "Image (contour) slice: " + GetImagePlane(this.CurrentSlice).ToString();
         }
 
         public void DefineSliderLevelStartingValue()
@@ -509,10 +512,10 @@ namespace EQD2Converter
         private void AddStructureContour()
         {
             List<Structure> structureList = GetStructureList();
-            
+
             RemoveAnnotations(this.PlotModelOriginal);
             RemoveAnnotations(this.PlotModelConverted);
-            
+
             foreach (Structure structure in structureList)
             {
                 VVector[][] contours = structure.GetContoursOnImagePlane(GetImagePlane(this.CurrentSlice));
@@ -551,7 +554,7 @@ namespace EQD2Converter
 
         public int GetImagePlane(int dosePlane)
         {
-            return Convert.ToInt32((this.OriginDose.z - this.OriginImage.z + dosePlane * this.ZresDose * this.Zdir.z) / this.ZresImage);
+            return (int)Math.Abs(((this.OriginImage.z - this.OriginDose.z) - dosePlane * this.ZresDose * this.Zdir.z) / this.ZresImage);
         }
 
         public Tuple<double, double> GetDosePlaneIndices(double x, double y)
@@ -560,7 +563,6 @@ namespace EQD2Converter
             // The following is valid only for HFS, HFP, FFS, FFP orientations that do not mix x,y,z
             double sx = this.Xdir.x + this.Ydir.x + this.Zdir.x;
             double sy = this.Xdir.y + this.Ydir.y + this.Zdir.y;
-            double sz = this.Xdir.z + this.Ydir.z + this.Zdir.z;
 
             double xDose = (x - this.OriginDose.x) / (this.XresDose * sx);
             double yDose = (y - this.OriginDose.y) / (this.YresDose * sy);
@@ -571,7 +573,7 @@ namespace EQD2Converter
         {
             List<Structure> structureList = new List<Structure>() { };
 
-            foreach(var selection in this.StructureListView.SelectedItems)
+            foreach (var selection in this.StructureListView.SelectedItems)
             {
                 string item = selection.ToString();
                 Structure structure = this.scriptcontext.StructureSet.Structures.First(u => u.Id == item);

@@ -6,7 +6,7 @@
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:local="clr-namespace:EQD2Converter"
         mc:Ignorable="d"
-        Title="PreviewWindow" Height="800" Width="1500">
+        Title="PreviewWindow" Height="800" Width="1500" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Style TargetType="{x:Type Button}"/>
         <Style TargetType="{x:Type Label}"/>
@@ -55,9 +55,13 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Slider x:Name="SliceSlider"  Orientation="Horizontal" Grid.Row="0" Grid.Column="0" SmallChange="1" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"></Slider>
-                <Button Margin="0,30,0,0" Content="DVH" Grid.Row="1" Grid.Column="0" Width="70" Height="35" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Button_Click"></Button>
+                <Label x:Name="DoseSlice" Content="Dose slice: 0" Grid.Row="1" Grid.Column="0"></Label>
+                <Label x:Name="ImageSlice" Content="Image (contour) slice: 0" Grid.Row="2" Grid.Column="0"></Label>
+                <Button Margin="0,30,0,0" Content="DVH" Grid.Row="3" Grid.Column="0" Width="70" Height="35" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Button_Click"></Button>
             </Grid>
             <Grid Grid.Row="0" Grid.Column="3" VerticalAlignment="Stretch">
                 <Grid.ColumnDefinitions>

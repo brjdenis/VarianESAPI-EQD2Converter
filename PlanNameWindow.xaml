@@ -1,0 +1,22 @@
+﻿<Window x:Class="EQD2Converter.PlanNameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EQD2Converter"
+        mc:Ignorable="d"
+        Title="PlanNameWindow" Height="162" Width="350" WindowStartupLocation="CenterScreen" Background="AliceBlue">
+    <Window.Resources>
+        <Style TargetType="{x:Type Button}"/>
+        <Style TargetType="{x:Type Label}"/>
+        <Style TargetType="{x:Type Border}"/>
+        <Style TargetType="{x:Type TextBox}"/>
+    </Window.Resources>
+    <Grid>
+        <Label Content="Plan name:" HorizontalAlignment="Left" Margin="23,25,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="PlanNameTextBox" HorizontalAlignment="Left" Margin="100,25,0,0" VerticalAlignment="Top" VerticalContentAlignment="Center" Height="26" Width="150"  MaxLength="16" TextChanged="IsPlanNameAvailable"/>
+        <Button x:Name="OKbutton"  Content="OK" HorizontalAlignment="Left" Margin="75,80,0,0" VerticalAlignment="Top" Width="80" Height="30" IsDefault="True" Click="Button_Click"/>
+        <Button Content="Cancel" HorizontalAlignment="Left" Margin="190,80,0,0" VerticalAlignment="Top" Width="80" Height="30" IsCancel="True" Click="Button_Click_1"/>
+        <Label x:Name="PlanNameTextBoxSuccess" Content="" HorizontalAlignment="Left" Margin="260,25,0,0" VerticalAlignment="Top"/>
+    </Grid>
+</Window>

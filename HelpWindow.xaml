@@ -1,0 +1,149 @@
+﻿<Window x:Class="EQD2Converter.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EQD2Converter"
+        mc:Ignorable="d"
+        Height="700" Width="900" Title="Help" Background="AliceBlue" WindowStartupLocation="CenterScreen" FontSize="14">
+    <Window.Resources>
+        <Style TargetType="{x:Type Button}"/>
+        <Style TargetType="{x:Type Label}"/>
+        <Style TargetType="{x:Type CheckBox}"/>
+        <Style TargetType="{x:Type ToolTip}"/>
+        <Style TargetType="{x:Type TextBlock}"/>
+        <Style TargetType="{x:Type StackPanel}"/>
+        <Style TargetType="{x:Type GroupBox}"/>
+        <Style TargetType="{x:Type ScrollBar}"/>
+        <Style TargetType="{x:Type TabControl}"/>
+        <Style TargetType="{x:Type TabItem}"/>
+        <Style TargetType="{x:Type TextBox}"/>
+        <Style TargetType="{x:Type Slider}"/>
+    </Window.Resources>
+    <ScrollViewer>
+        <Grid Grid.Row="1" Margin="10,10,10,10" VerticalAlignment="Top"  Width="Auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Column="0" TextWrapping="Wrap" Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Grid}}, Path=ActualWidth}">
+                <Bold>alpha/beta</Bold><LineBreak/>
+                If alpha/beta cell is empty, no conversion will take place for that structure. Values entered must be decimal numbers, for example, 2, 3, 4.6 etc. Do not put in 0 when
+                calculating BED.
+                <LineBreak/>
+                <LineBreak/>
+                
+                <Bold>alpha/beta order</Bold><LineBreak/>
+                If structures are overlapping, you must select the appropriate alpha/beta order. For non-overlapping structures alpha/beta order has no effect. <LineBreak/><LineBreak/>
+                <Italic>Descending</Italic> order means that the voxels within the overlapping region
+                will have the highest alpha/beta value out of all the structures that contribute to this region. 
+                <LineBreak/><LineBreak/>
+                <Italic>Ascending</Italic> order means that the voxels within the overlapping region
+                will have the lowest alpha/beta value out of all the structures that contribute to this region. 
+                <LineBreak/>
+                <LineBreak/>
+                <InlineUIContainer>
+                    <Image Source="image_asc.png" Height="300"></Image>
+                </InlineUIContainer>        
+                <LineBreak/>
+                <LineBreak/>
+                <Bold>Convert to</Bold><LineBreak/>
+                <Italic>n - number of fractions.</Italic>
+                <LineBreak/>
+                <Italic>D - total dose in Gy.</Italic>
+                <LineBreak/>
+                <Italic>EQD2</Italic> - equivalent dose, 2 Gy per fraction. EQD2 = D ( a/b + D/n) / (a/b + 2).
+                <LineBreak/>
+                <Italic>BED</Italic> - biological equivalent dose. BED = D (1 + D / ( n a/b)).
+                <LineBreak/>
+                <Italic>Multiply by a/b</Italic> - rescalation of raw voxel values with a/b. Used for experimentation or testing.
+                <LineBreak/>
+                <LineBreak/>
+                                
+                <Bold>Create plan</Bold><LineBreak/>
+                A new window will open. Type in the desired plan <Bold>ID</Bold>. If it is not available, a red cross will appear next to it.
+                <LineBreak/>
+                The script will write back to the local database. A new verification plan will be created with a modified dose distribution. The plan will not have any fields.
+                This plan cannot and should not be used for patient treatment!
+                <LineBreak/>
+                <LineBreak/>
+                <Bold>Result of the conversion</Bold><LineBreak/>
+                When conversion has finished a message window will appear.
+                <LineBreak/><LineBreak/>
+                <InlineUIContainer>
+                    <Image Source="image_asc6.png" Height="200"></Image>
+                </InlineUIContainer>        
+                <LineBreak/><LineBreak/>
+                The message windows shows three scaling factors. In almost all circumstances the first two factors should be
+                equal, and the last one should be exactly 1. The first factor is the ratio between voxel absolute dose in Gy and
+                raw 32 bit voxel value. The second factor is the same ratio, except it is calculated on the created plan before
+                voxels are overridden with new values. The last factor is an additional correction factor with which the 
+                modified raw voxel values are multiplied. It is only needed when the conversion is performed on a plan from a 3rd party
+                planning system with unknown fractionation, or if fractionation was changed in Eclipse.
+                <LineBreak/>
+                <LineBreak/>
+                <Bold>Preview</Bold><LineBreak/>
+                A new window will appear. The script will make an in-memory conversion without writing back to the database. The left plot will show the original dose distribution,
+                the right plot will show the converted dose distribution. The right plot is connected to the left plot, but not vice-versa. The following commands are possible:
+                <LineBreak/>
+                <LineBreak/>
+                <Underline>Left mouse button</Underline> - tracker will appear. Values of dose will be in Gy.<LineBreak/>
+                <Underline>Right mouse button </Underline> - zoom region. Works on both plots, but if used on the right plot, it will zoom on both.<LineBreak/>
+                <Underline>Right mouse double click</Underline> - zoom reset.<LineBreak/>
+                <Underline>Middle mouse button scroll</Underline> - slice scroll. The scrolling is performed among dose planes, not image planes.<LineBreak/>
+                <Underline>Middle mouse click</Underline> - pan.
+                <LineBreak/>
+                <LineBreak/>
+                <Italic>Dose slice</Italic> is the index of the current dose plane. Full dose matrix can be reviewed. <LineBreak/>
+                <LineBreak/>
+                <Italic>Image (contour) slice</Italic> is the index of the image plane, from which the contours are taken for display.
+                <LineBreak/>
+                <LineBreak/>
+                Because the dose matrix and the image matrix can have different resolutions, the image slice often does not match
+                the dose slice. 
+                For a very fine dose grid one may notice that the image slice does not vary when dose slice is changed.
+                This is normal. The script does not perform interpolation of contours between image slices. 
+                <LineBreak/>
+                <LineBreak/>
+                
+                <Bold>DVH</Bold><LineBreak/>
+                DVH is calculated without interpolation. Only those dose voxels are taken into account, that have centers inside
+                the structure. For that reason, the DVH has poor accuracy for smaller structures. To improve the accuracy,
+                recalculate the plan with smaller dose voxels.
+                <LineBreak/>
+                <LineBreak/>
+                Two DVH curves are displayed. One (solid) belongs to the original dose distribution, and is calculated with Eclipse.
+                The other (dashed) belongs to the modified dose distribution, and is calculated independently.
+                <LineBreak/>
+                <LineBreak/>
+                The table has the following columns to evaluate structure coverage with dose voxels:
+                <LineBreak/>
+                <LineBreak/>
+                <Italic>Dose cover Eclipse</Italic> - structure coverage with dose calculated with Eclipse.<LineBreak/>
+                <LineBreak/>
+                <Italic>Sampling cover Converted</Italic> - the ratio N V_0 / V_structure, where N is the number of dose voxels
+                with centers inside the structure, V_0 is the volume of one dose voxel, and V_structure is the volume of the structure.
+                <LineBreak/>
+                <LineBreak/>
+                <Bold>Important notes</Bold><LineBreak/>
+                1. The conversion only works for HFS, HFP, FFS, FFP orientations. If the treatment orientation is
+                forced in the plan, the conversion will be correct, however, the verification plan will show the original
+                orientation.
+                <LineBreak/>
+                <LineBreak/>
+                2. Before you create a verification plan it is prudent to check if the voxels were properly detected. Select "Multiply by a/b" and run Preview. On the plot
+                check that the voxels are nicely detected. If they are not, you may have a problem.
+                <LineBreak/>
+                <LineBreak/>
+                3. If you are not satisfied with the detection of dose voxels inside the structure (see point 2), reduce the size of the voxel or slightly change the calculation volume limits.
+                <LineBreak/>
+                <LineBreak/>
+
+            </TextBlock>
+        </Grid>
+    </ScrollViewer>
+        
+
+</Window>
