@@ -1,5 +1,5 @@
 # EQD2/BED converter
-This Varian ESAPI script converts nominal dose distributions to EQD2 or BED dose distributions. It should be used only for experimentation purposes.
+This Varian ESAPI script converts nominal dose distributions to EQD2 or BED dose distributions.
 
 ![image](image_asc2.png)
 
@@ -14,10 +14,10 @@ The script was developed for Eclipse version 15.6. It may not work with other ve
 
 ## How to use the script
 
-To use the script, do this:
+To use the script do this:
 
 1. Run the script on the original plan. Define alpha/beta and click the button "Create plan...".
-2. When you see the message "Done!", close the script.
+2. A message windows will pop up. In most cases the first two scaling factors are equal, and the last one is 1. 
 3. A verification plan will show up in the tree. This plan has no beams, only a (modified) dose distribution.
 4. You can use this plan to create plan sums etc.
 
@@ -34,9 +34,7 @@ You can also preview the conversion without actually saving it to a verification
 
 Dose is displayed in Grays. If you don't see the correct unit, create a new issue or start a new discussion. It should be easy to fix the script for other units. More is to come when I find the time.
 
-Another thing, if you create a verification plan with no a/b modifications, the resulting absolute dose distribution may not be exactly equal to the original dose distribution. The reason is that I did not use the internal function to convert raw pixel values into user units because I had problems with it. Instead, I calculated the dose scaling factor (equal to the one in dicom) by dividing the max dose in the 3D distribution that Eclipse returns quickly and the max integer value in the raw dose matrix (that Eclipse returns when GetVoxels is called). 
-
-Note as well that the displayed contours are not interpolated between image slices.
+The displayed contours are not interpolated between image slices. This means that the image slice will not always change with dose slice.
 
 ![image](image_asc3.png)
 
@@ -66,6 +64,14 @@ When a particular structure is not fully covered with dose, the calculation resu
 
 * (12.11.2021) Added the preview window.
 * (5.12.2021) Changed the script completely, following the suggestion by @Kiragroh. Now exporting and importing the dose matrix is not needed, everything is done in Eclipse.
+* (6.1.2022) 
+	* Fixed the display of contours in Preview for orientations other than HFS.
+	* Fixed the calculation of image slice in Preview.
+	* Added Help.
+	* Added the option of inverting colors on DVH.
+	* Added a dialog window where the user can input plan name.
+	* Added the waiting window.
+	* Introduced a third scaling factor that is used to fix raw pixel values in the verification plan. 
 
 
 ## Important note
