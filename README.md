@@ -55,7 +55,7 @@ When a particular structure is not fully covered with dose, the calculation resu
 4. When you define a/b for each structure, you have to decide how the script will deal with overlapping regions. Using "Ascending": structures will be ordered in ascending order of a/b. Meaning that the structure with lower a/b will have all voxels overridden with new values, but the overlapping part of structures with higher a/b will not have values overridden for those voxels that are inside structures with lower a/b. For "Descending" the opposite applies. See image below.
 5. If you need better accuracy, calculate the original plan with smaller dose box width.
 6. The conversion should (only) work for HFS, HFP, FFS, FFP orientations. If you are summing up plans based on different registered images, the result may be wrong. I haven't had time to test this.
-
+7. If you are not happy with the fact that the structure is not fully covered with converted voxels, you may enable the "Force edge conversion" option. This option will create an auxiliary structure set where structures will be copied to and inflated by a selected margin before use in the conversion. The margin should be equal to the size of the dose voxel, but you may set it to your desire.
 
 ![image](image_asc.png)
 
@@ -72,6 +72,7 @@ When a particular structure is not fully covered with dose, the calculation resu
 	* Added a dialog window where the user can input plan name.
 	* Added the waiting window.
 	* Introduced a third scaling factor that is used to fix raw pixel values in the verification plan. 
+* (31.1.2022) Add the option of creating a margin for structure before conversion of dose voxels.
 
 
 ## Important note

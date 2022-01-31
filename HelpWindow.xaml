@@ -61,6 +61,15 @@
                 <Italic>Multiply by a/b</Italic> - rescalation of raw voxel values with a/b. Used for experimentation or testing.
                 <LineBreak/>
                 <LineBreak/>
+                <Bold>Force edge conversion</Bold><LineBreak/>
+                Because the script only converts those dose voxels that have centers inside the structure, the structure
+                edges may not be sampled adequately. To improve the conversion, one can add a margin to the structure in 
+                order to ensure that the whole structure is covered with converted voxels. The margin is normally the size
+                of the dose voxel. When using this function, the script will create an auxiliary structure set where
+                inflated structures will be created for calculation. After conversion, the structures will be deleted, but
+                the structure set (and the image) will remain.
+                <LineBreak/>
+                <LineBreak/>
                                 
                 <Bold>Create plan</Bold><LineBreak/>
                 A new window will open. Type in the desired plan <Bold>ID</Bold>. If it is not available, a red cross will appear next to it.
@@ -137,7 +146,7 @@
                 check that the voxels are nicely detected. If they are not, you may have a problem.
                 <LineBreak/>
                 <LineBreak/>
-                3. If you are not satisfied with the detection of dose voxels inside the structure (see point 2), reduce the size of the voxel or slightly change the calculation volume limits.
+                3. If you are not satisfied with the detection of dose voxels inside the structure (see point 2), reduce the size of the voxel or slightly change the calculation volume limits. Or increase the margin.
                 <LineBreak/>
                 <LineBreak/>
 

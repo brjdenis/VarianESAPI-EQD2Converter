@@ -59,10 +59,10 @@
             <Button Margin="10,0,0,0"  Height="30" Width="60" Content="Help" HorizontalAlignment="Right" Click="Button_Click_2"></Button>
         </StackPanel>
 
-        <Grid Grid.Row="1" HorizontalAlignment="Stretch">
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -91,6 +91,16 @@
                     </Style>
                 </DataGrid.CellStyle>
             </DataGrid>
+            <StackPanel Orientation="Vertical" Grid.Column="1" Margin="0,10,10,10" HorizontalAlignment="Stretch">
+                <CheckBox x:Name="ForceConversionCheckBox" Content="Force edge conversion?" Height="20" VerticalAlignment="Top" IsChecked="False" Unchecked="ForceConversionCheckBox_Checked" Checked="ForceConversionCheckBox_Checked"></CheckBox>
+                <TextBlock TextWrapping="Wrap" x:Name="ForcedConversionLabel" Width="250" HorizontalAlignment="Stretch"/>
+                <StackPanel x:Name="ForceConversionMarginStackPanel" Orientation="Horizontal" Visibility="Hidden" HorizontalAlignment="Left">
+                    <Label Content="Margin: " HorizontalAlignment="Left"></Label>
+                    <TextBox x:Name="ForceConversionMargin" Width="50" Height="20" VerticalContentAlignment="Center" TextChanged="ForceConversionMargin_TextChanged" HorizontalAlignment="Left"></TextBox>
+                    <Label Content=" mm" HorizontalAlignment="Left"></Label>
+                </StackPanel>
+            </StackPanel>
+            
         </Grid>
     </Grid>
 </Window>

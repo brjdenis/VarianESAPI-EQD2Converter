@@ -44,10 +44,14 @@ namespace EQD2Converter
         public double doseMax;
         public double doseMin;
 
+        public bool WasStructureSetCreated = false; // set to true when adding margins to structures
+        public StructureSet AuxStructureSet; // auxiliary structureset
+
         public MainWindow(ScriptContext scriptcontext)
         {
             this.scriptcontext = scriptcontext;
             this.numberOfFractions = (int)scriptcontext.ExternalPlanSetup.NumberOfFractions;
+            this.AuxStructureSet = (StructureSet)null;
 
             InitializeComponent();
 
@@ -58,6 +62,8 @@ namespace EQD2Converter
             this.ComboBox2.SelectedIndex = 0;
 
             PopulateDataGrid();
+
+            DetermineMargin();
 
         }
 
@@ -276,10 +282,37 @@ namespace EQD2Converter
                 sortedDict = from entry in structureDict orderby entry.Value ascending select entry;
             }
 
+            // If forced edge conversion is on, add margin to structure on a seperate structureset
+            if ((bool)this.ForceConversionCheckBox.IsChecked)
+            {
+                if (!this.WasStructureSetCreated)
+                {
+                    this.AuxStructureSet = this.scriptcontext.Image.CreateNewStructureSet();
+                    this.WasStructureSetCreated = true;
+                }
+            }
+
             foreach (var str in sortedDict)
             {
                 Structure structure = str.Key;
                 double alphabeta = str.Value;
+
+                // transfer structure to auxiliary structure set and add margin:
+                if ((bool)this.ForceConversionCheckBox.IsChecked)
+                {
+                    Structure newStructure = this.AuxStructureSet.AddStructure(structure.DicomType, structure.Id);
+                    double margin = ConvertTextToDouble(this.ForceConversionMargin.Text);
+                    var segmVolMargin = structure.SegmentVolume.Margin(margin);
+
+                    newStructure.SegmentVolume = segmVolMargin;
+                    structure = newStructure;
+                }
+
+                if (structure.IsEmpty)
+                {
+                    MessageBox.Show("Cannot apply margin to " + structure.Id + ". Structure will be skipped.", "Error");
+                    continue;
+                }
 
                 if (this.ComboBox2.SelectedValue.ToString() == "EQD2")
                 {
@@ -295,6 +328,14 @@ namespace EQD2Converter
                 {
                     OverridePixels(structure, alphabeta, doseMatrix, scaling, Xsize, Ysize, Zsize,
                          Xres, Yres, Zres, Xdir, Ydir, Zdir, doseOrigin, MultiplyByAlphaBeta);
+                }
+
+                if ((bool)this.ForceConversionCheckBox.IsChecked)
+                {
+                    if (this.AuxStructureSet.CanRemoveStructure(structure))
+                    {
+                        this.AuxStructureSet.RemoveStructure(structure);
+                    }
                 }
             }
 
@@ -399,7 +440,6 @@ namespace EQD2Converter
         {
             return Convert.ToInt32((coord - origin) / (direction * res));
         }
-
 
         public void OverridePixels(Structure structure, double alphabeta, int[,,] doseMatrix, double scaling, int Xsize, int Ysize, int Zsize,
             double Xres, double Yres, double Zres, VVector Xdir, VVector Ydir, VVector Zdir, VVector doseOrigin, calculateFunction functionCalculate)
@@ -530,20 +570,28 @@ namespace EQD2Converter
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
+            int[,,] convdose = new int[0, 0, 0];
+            var waitWindow = new WaitingWindow();
             // Show waiting window temporarily
             this.Cursor = Cursors.Wait;
-            var waitWindow = new WaitingWindow();
             waitWindow.Show();
-
-            int[,,] convdose = ConvertDose((ExternalPlanSetup)null, true);
-            Tuple<int, int> minMaxConverted = GetMinMaxValues(convdose, convdose.GetLength(1), convdose.GetLength(2), convdose.GetLength(0));
-
-            PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray,
-                this.scaling, this.doseMin, this.doseMax, minMaxConverted.Item1, minMaxConverted.Item2);
-
+            try
+            {
+                convdose = ConvertDose((ExternalPlanSetup)null, true);
+            }
+            catch (Exception f)
+            {
+                waitWindow.Close();
+                this.Cursor = null;
+                MessageBox.Show(f.Message + "\n" + f.StackTrace, "Error");
+                return;
+            }
             waitWindow.Close();
             this.Cursor = null;
 
+            Tuple<int, int> minMaxConverted = GetMinMaxValues(convdose, convdose.GetLength(1), convdose.GetLength(2), convdose.GetLength(0));
+            PreviewWindow previewWindow = new PreviewWindow(this.scriptcontext, convdose, this.originalArray,
+                this.scaling, this.doseMin, this.doseMax, minMaxConverted.Item1, minMaxConverted.Item2);
             previewWindow.ShowDialog();
         }
 
@@ -552,6 +600,39 @@ namespace EQD2Converter
             HelpWindow helpwindow = new HelpWindow();
             helpwindow.Owner = this;
             helpwindow.Show();
+        }
+
+        public void DetermineMargin()
+        {
+            //determine margin for structures from dose voxel size
+            double dx = this.scriptcontext.ExternalPlanSetup.Dose.XRes;
+            double dy = this.scriptcontext.ExternalPlanSetup.Dose.YRes;
+            double dz = this.scriptcontext.ExternalPlanSetup.Dose.ZRes;
+            this.ForceConversionMargin.Text = new List<double>() { dx, dy, dz }.Max().ToString();
+        }
+
+        private void ForceConversionCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if ((bool)this.ForceConversionCheckBox.IsChecked)
+            {
+                this.ForcedConversionLabel.Text = "Warning. An auxiliary structure set will be created. The plan and the original structure set" +
+                    " will be left untouched. After conversion you must manually delete the new structure set/image.";
+                this.ForcedConversionLabel.Foreground = Brushes.Red;
+                this.ForceConversionMarginStackPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.ForcedConversionLabel.Text = "";
+                this.ForceConversionMarginStackPanel.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void ForceConversionMargin_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox txt = sender as TextBox;
+            int ind = txt.CaretIndex;
+            txt.Text = txt.Text.Replace(",", ".");
+            txt.CaretIndex = ind;
         }
     }
 }
